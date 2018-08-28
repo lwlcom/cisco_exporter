@@ -3,7 +3,6 @@ package bgp
 import (
 	"errors"
 	"regexp"
-	"strings"
 
 	"github.com/lwlcom/cisco_exporter/rpc"
 	"github.com/lwlcom/cisco_exporter/util"
@@ -15,16 +14,11 @@ func (c *bgpCollector) Parse(ostype string, output string) ([]BgpSession, error)
 		return nil, errors.New("'show bgp all summary' is not implemented for " + ostype)
 	}
 	items := []BgpSession{}
-	neighborRegexp, _ := regexp.Compile(`^(\S+)\s+\d\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\S+\s+(\S+)\s*$`)
+	neighborRegexp, _ := regexp.Compile(`(\S+)\s+\d\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\S+\s+(\S+)\s*`)
 
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		matches := neighborRegexp.FindStringSubmatch(line)
-		if matches == nil {
-			continue
-		}
-
-		pref := util.Str2float64(matches[5])
+	matches := neighborRegexp.FindAllStringSubmatch(output, -1)
+	for _, match := range matches {
+		pref := util.Str2float64(match[5])
 		up := true
 		if pref < 0 {
 			pref = 0
@@ -32,10 +26,10 @@ func (c *bgpCollector) Parse(ostype string, output string) ([]BgpSession, error)
 		}
 
 		item := BgpSession{
-			IP:               matches[1],
-			Asn:              matches[2],
-			InputMessages:    util.Str2float64(matches[3]),
-			OutputMessages:   util.Str2float64(matches[4]),
+			IP:               match[1],
+			Asn:              match[2],
+			InputMessages:    util.Str2float64(match[3]),
+			OutputMessages:   util.Str2float64(match[4]),
 			Up:               up,
 			ReceivedPrefixes: pref,
 		}
