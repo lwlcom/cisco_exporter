@@ -16,10 +16,10 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 	items := []Interface{}
 	newIfRegexp, _ := regexp.Compile(`(?:^!?(?: |admin|show|.+#).*$|^$)`)
 	macRegexp, _ := regexp.Compile(`^\s+Hardware(?: is|:) .+, address(?: is|:) (.*) \(.*\)$`)
-	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/-]+) is.*$`)
+	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+) is.*$`)
 	adminStatusRegexp, _ := regexp.Compile(`^.+ is (up|down).*, line protocol is (up|down).*$`)
 	adminStatusNXOSRegexp, _ := regexp.Compile(`^admin state is (.*),.*$`)
-	operStatusNXOSRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\/-]+ is (up|down)( .*|$)`)
+	operStatusNXOSRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\/\.-]+ is (up|down)( .*|$)`)
 	descRegexp, _ := regexp.Compile(`^\s+Description: (.*)$`)
 	dropsRegexp, _ := regexp.Compile(`^\s+Input queue: \d+\/\d+\/(\d+)\/\d+ .+ Total output drops: (\d+)$`)
 	inputBytesRegexp, _ := regexp.Compile(`^\s+\d+ (?:packets input,|input packets)\s+(\d+) bytes.*$`)
