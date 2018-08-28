@@ -18,9 +18,8 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 	newIfRegexp, _ := regexp.Compile(`(?:^!?(?: |admin|show|.+#).*$|^$)`)
 	macRegexp, _ := regexp.Compile(`^\s+Hardware(?: is|:) .+, address(?: is|:) (.*) \(.*\)$`)
 	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+) is.*$`)
-	adminStatusRegexp, _ := regexp.Compile(`^.+ is (up|down).*, line protocol is (up|down).*$`)
-	adminStatusNXOSRegexp, _ := regexp.Compile(`^admin state is (.*),.*$`)
-	operStatusNXOSRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\/\.-]+ is (up|down)( .*|$)`)
+	adminStatusRegexp, _ := regexp.Compile(`^.+ is (administratively)?\s*(up|down).*, line protocol is.*$`)
+	adminStatusNXOSRegexp, _ := regexp.Compile(`^\S+ is (up|down)(?:\s|,)(\(Administratively down\))?.*$`)
 	descRegexp, _ := regexp.Compile(`^\s+Description: (.*)$`)
 	dropsRegexp, _ := regexp.Compile(`^\s+Input queue: \d+\/\d+\/(\d+)\/\d+ .+ Total output drops: (\d+)$`)
 	inputBytesRegexp, _ := regexp.Compile(`^\s+\d+ (?:packets input,|input packets)\s+(\d+) bytes.*$`)
@@ -48,11 +47,18 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 		}
 
 		if matches := adminStatusRegexp.FindStringSubmatch(line); matches != nil {
-			current.AdminStatus = matches[1]
+			if matches[1] == "" {
+				current.AdminStatus = "up"
+			} else {
+				current.AdminStatus = "down"
+			}
 			current.OperStatus = matches[2]
 		} else if matches := adminStatusNXOSRegexp.FindStringSubmatch(line); matches != nil {
-			current.AdminStatus = matches[1]
-		} else if matches := operStatusNXOSRegexp.FindStringSubmatch(line); matches != nil {
+			if matches[2] == "" {
+				current.AdminStatus = "up"
+			} else {
+				current.AdminStatus = "down"
+			}
 			current.OperStatus = matches[1]
 		} else if matches := descRegexp.FindStringSubmatch(line); matches != nil {
 			current.Description = matches[1]
