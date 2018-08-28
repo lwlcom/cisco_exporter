@@ -19,8 +19,8 @@ var (
 
 func init() {
 	l := []string{"target", "interface"}
-	opticsTXDesc = prometheus.NewDesc(prefix+"rx", "Transceiver Rx power", l, nil)
-	opticsRXDesc = prometheus.NewDesc(prefix+"tx", "Transceiver Tx power", l, nil)
+	opticsTXDesc = prometheus.NewDesc(prefix+"tx", "Transceiver Rx power", l, nil)
+	opticsRXDesc = prometheus.NewDesc(prefix+"rx", "Transceiver Tx power", l, nil)
 }
 
 type opticsCollector struct {
