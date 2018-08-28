@@ -70,5 +70,5 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 			current.OutputErrors = util.Str2float64(matches[1])
 		}
 	}
-	return items, nil
+	return append(items, current), nil
 }
