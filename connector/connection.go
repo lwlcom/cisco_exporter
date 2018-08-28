@@ -22,7 +22,7 @@ var (
 	lock         = &sync.Mutex{}
 )
 
-func config(user, keyFile string) (*ssh.ClientConfig, error) {
+func config(user, keyFile string, legacyCiphers bool) (*ssh.ClientConfig, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -41,17 +41,23 @@ func config(user, keyFile string) (*ssh.ClientConfig, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         timeoutInSeconds * time.Second,
 	}
+	if legacyCiphers {
+		cachedConfig.Ciphers = append(cachedConfig.Ciphers, "aes128-cbc", "3des-cbc", "aes192-cbc", "aes256-cbc")
+	}
 
 	return cachedConfig, nil
 }
 
 // NewSSSHConnection connects to device
-func NewSSSHConnection(host, user, keyFile string) (*SSHConnection, error) {
+func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool) (*SSHConnection, error) {
 	if !strings.Contains(host, ":") {
 		host = host + ":22"
 	}
 
-	c := &SSHConnection{Host: host}
+	c := &SSHConnection{
+		Host:          host,
+		legacyCiphers: legacyCiphers,
+	}
 	err := c.Connect(user, keyFile)
 	if err != nil {
 		return nil, err
@@ -62,16 +68,17 @@ func NewSSSHConnection(host, user, keyFile string) (*SSHConnection, error) {
 
 // SSHConnection encapsulates the connection to the device
 type SSHConnection struct {
-	client  *ssh.Client
-	Host    string
-	stdin   io.WriteCloser
-	stdout  io.Reader
-	session *ssh.Session
+	client        *ssh.Client
+	Host          string
+	stdin         io.WriteCloser
+	stdout        io.Reader
+	session       *ssh.Session
+	legacyCiphers bool
 }
 
 // Connect connects to the device
 func (c *SSHConnection) Connect(user, keyFile string) error {
-	config, err := config(user, keyFile)
+	config, err := config(user, keyFile, c.legacyCiphers)
 	if err != nil {
 		return err
 	}

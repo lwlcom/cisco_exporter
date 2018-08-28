@@ -22,6 +22,7 @@ var (
 	sshUsername       = flag.String("ssh.user", "cisco_exporter", "Username to use for SSH connection")
 	sshKeyFile        = flag.String("ssh.keyfile", "", "Key file to use for SSH connection")
 	debug             = flag.Bool("debug", false, "Show verbose debug output in log")
+	legacyCiphers     = flag.Bool("legacy.ciphers", false, "Allow legacy CBC ciphers")
 	bgpEnabled        = flag.Bool("bgp.enabled", true, "Scrape bgp metrics")
 	environmetEnabled = flag.Bool("environment.enabled", true, "Scrape environment metrics")
 	factsEnabled      = flag.Bool("facts.enabled", true, "Scrape system metrics")
