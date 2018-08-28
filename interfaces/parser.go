@@ -17,7 +17,7 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 	newIfRegexp, _ := regexp.Compile(`(?:^!?(?: |admin|show|.+#).*$|^$)`)
 	macRegexp, _ := regexp.Compile(`^\s+Hardware(?: is|:) .+, address(?: is|:) (.*) \(.*\)$`)
 	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/-]+) is.*$`)
-	adminStatusRegexp, _ := regexp.Compile(`^.+ is(?: administratively)? (\w+), line protocol is (\w+).*$`)
+	adminStatusRegexp, _ := regexp.Compile(`^.+ is (up|down).*, line protocol is (up|down).*$`)
 	adminStatusNXOSRegexp, _ := regexp.Compile(`^admin state is (.*),.*$`)
 	operStatusNXOSRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\/-]+ is (up|down)( .*|$)`)
 	descRegexp, _ := regexp.Compile(`^\s+Description: (.*)$`)
