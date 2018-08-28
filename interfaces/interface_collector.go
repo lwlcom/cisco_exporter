@@ -66,9 +66,31 @@ func (c *interfaceCollector) Collect(client *rpc.Client, ch chan<- prometheus.Me
 	items, err := c.Parse(client.OSType, out)
 	if err != nil {
 		if client.Debug {
-			log.Printf("Parse bgp sessions for %s: %s\n", labelValues[0], err.Error())
+			log.Printf("Parse interfaces for %s: %s\n", labelValues[0], err.Error())
 		}
 		return nil
+	}
+	if client.OSType == rpc.IOSXE {
+		out, err := client.RunCommand("show vlans")
+		if err != nil {
+			return err
+		}
+		vlans, err := c.ParseVlans(client.OSType, out)
+		if err != nil {
+			if client.Debug {
+				log.Printf("Parse vlans for %s: %s\n", labelValues[0], err.Error())
+			}
+			return nil
+		}
+		for _, vlan := range vlans {
+			for i, item := range items {
+				if item.Name == vlan.Name {
+					items[i].InputBytes = vlan.InputBytes
+					items[i].OutputBytes = vlan.OutputBytes
+					break
+				}
+			}
+		}
 	}
 
 	for _, item := range items {
