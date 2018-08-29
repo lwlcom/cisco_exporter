@@ -42,7 +42,8 @@ func config(user, keyFile string, legacyCiphers bool) (*ssh.ClientConfig, error)
 		Timeout:         timeoutInSeconds * time.Second,
 	}
 	if legacyCiphers {
-		cachedConfig.Ciphers = append(cachedConfig.Ciphers, "aes128-cbc", "3des-cbc", "aes192-cbc", "aes256-cbc")
+		cachedConfig.SetDefaults()
+		cachedConfig.Ciphers = append(cachedConfig.Ciphers, "aes128-cbc", "3des-cbc")
 	}
 
 	return cachedConfig, nil
