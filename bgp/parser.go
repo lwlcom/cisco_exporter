@@ -10,7 +10,7 @@ import (
 
 // Parse parses cli output and tries to find bgp sessions with related data
 func (c *bgpCollector) Parse(ostype string, output string) ([]BgpSession, error) {
-	if ostype != rpc.IOSXE {
+	if ostype != rpc.IOSXE && ostype != rpc.NXOS {
 		return nil, errors.New("'show bgp all summary' is not implemented for " + ostype)
 	}
 	items := []BgpSession{}
