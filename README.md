@@ -21,7 +21,7 @@ All metrics are enabled by default. To disable something pass a flag `--<name>.e
 
 Name     | Description | OS
 ---------|-------------|----
-bgp | BGP (message count, prefix counts per peer, session state) | IOS XE
+bgp | BGP (message count, prefix counts per peer, session state) | IOS XE/NX-OS
 environment | Environment (temperatures, state of power supply) | NX-OS/IOS XE/IOS
 facts | System informations (OS Version, memory: total/used/free, cpu: 5s/1m/5m/interrupts) | IOS XE/IOS
 interface | Interfaces (transmitted/received: bytes/errors/drops, admin/oper state) | NX-OS (*_drops is always 0)/IOS XE/IOS
