@@ -39,7 +39,7 @@ func (*opticsCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect collects metrics from Cisco
 func (c *opticsCollector) Collect(client *rpc.Client, ch chan<- prometheus.Metric, labelValues []string) error {
-	out, err := client.RunCommand("show interface")
+	out, err := client.RunCommand("show interfaces stats | exclude disabled")
 	if err != nil {
 		return err
 	}

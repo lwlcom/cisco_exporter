@@ -12,10 +12,10 @@ import (
 // ParseInterfaces parses cli output and returns list of interface names
 func (c *opticsCollector) ParseInterfaces(ostype string, output string) ([]string, error) {
 	if ostype != rpc.IOSXE && ostype != rpc.NXOS && ostype != rpc.IOS {
-		return nil, errors.New("'show interfaces' is not implemented for " + ostype)
+		return nil, errors.New("'show interfaces stats' is not implemented for " + ostype)
 	}
 	var items []string
-	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+) is.*$`)
+	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+)\s*$`)
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		matches := deviceNameRegexp.FindStringSubmatch(line)
