@@ -48,7 +48,7 @@ func config(user, keyFile string, legacyCiphers bool, timeout int) (*ssh.ClientC
 }
 
 // NewSSSHConnection connects to device
-func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout int) (*SSHConnection, error) {
+func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout int, batchSize int) (*SSHConnection, error) {
 	if !strings.Contains(host, ":") {
 		host = host + ":22"
 	}
@@ -56,6 +56,7 @@ func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout i
 	c := &SSHConnection{
 		Host:          host,
 		legacyCiphers: legacyCiphers,
+		batchSize:     batchSize,
 	}
 	err := c.Connect(user, keyFile, timeout)
 	if err != nil {
@@ -73,6 +74,7 @@ type SSHConnection struct {
 	stdout        io.Reader
 	session       *ssh.Session
 	legacyCiphers bool
+	batchSize     int
 }
 
 // Connect connects to the device
@@ -158,7 +160,7 @@ func loadPublicKeyFile(file string) (ssh.AuthMethod, error) {
 
 func (c *SSHConnection) readln(ch chan result, cmd string, r io.Reader) {
 	re := regexp.MustCompile(`.+#\s?$`)
-	buf := make([]byte, 10000)
+	buf := make([]byte, c.batchSize)
 	loadStr := ""
 	for {
 		n, err := r.Read(buf)
