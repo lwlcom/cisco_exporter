@@ -80,7 +80,7 @@ func handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
 	reg := prometheus.NewRegistry()
 
 	targets := strings.Split(*sshHosts, ",")
-	c := newCiscoCollector(targets, *sshTimeout)
+	c := newCiscoCollector(targets)
 	reg.MustRegister(c)
 
 	promhttp.HandlerFor(reg, promhttp.HandlerOpts{
