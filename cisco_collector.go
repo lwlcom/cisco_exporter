@@ -33,11 +33,12 @@ func init() {
 type ciscoCollector struct {
 	targets    []string
 	collectors map[string]collector.RPCCollector
+	timeout    int
 }
 
-func newCiscoCollector(targets []string) *ciscoCollector {
+func newCiscoCollector(targets []string, timeout int) *ciscoCollector {
 	collectors := collectors()
-	return &ciscoCollector{targets, collectors}
+	return &ciscoCollector{targets, collectors, timeout}
 }
 
 func collectors() map[string]collector.RPCCollector {
@@ -99,7 +100,7 @@ func (c *ciscoCollector) collectForHost(host string, ch chan<- prometheus.Metric
 		ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, time.Since(t).Seconds(), l...)
 	}()
 
-	conn, err := connector.NewSSSHConnection(host, *sshUsername, *sshKeyFile, *legacyCiphers)
+	conn, err := connector.NewSSSHConnection(host, *sshUsername, *sshKeyFile, *legacyCiphers, c.timeout)
 	if err != nil {
 		log.Errorln(err)
 		ch <- prometheus.MustNewConstMetric(upDesc, prometheus.GaugeValue, 0, l...)

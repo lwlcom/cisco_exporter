@@ -15,14 +15,12 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const timeoutInSeconds = 5
-
 var (
 	cachedConfig *ssh.ClientConfig
 	lock         = &sync.Mutex{}
 )
 
-func config(user, keyFile string, legacyCiphers bool) (*ssh.ClientConfig, error) {
+func config(user, keyFile string, legacyCiphers bool, timeout int) (*ssh.ClientConfig, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -39,7 +37,7 @@ func config(user, keyFile string, legacyCiphers bool) (*ssh.ClientConfig, error)
 		User:            user,
 		Auth:            []ssh.AuthMethod{pk},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         timeoutInSeconds * time.Second,
+		Timeout:         time.Duration(timeout) * time.Second,
 	}
 	if legacyCiphers {
 		cachedConfig.SetDefaults()
@@ -50,7 +48,7 @@ func config(user, keyFile string, legacyCiphers bool) (*ssh.ClientConfig, error)
 }
 
 // NewSSSHConnection connects to device
-func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool) (*SSHConnection, error) {
+func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout int) (*SSHConnection, error) {
 	if !strings.Contains(host, ":") {
 		host = host + ":22"
 	}
@@ -59,7 +57,7 @@ func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool) (*SSHConn
 		Host:          host,
 		legacyCiphers: legacyCiphers,
 	}
-	err := c.Connect(user, keyFile)
+	err := c.Connect(user, keyFile, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +76,8 @@ type SSHConnection struct {
 }
 
 // Connect connects to the device
-func (c *SSHConnection) Connect(user, keyFile string) error {
-	config, err := config(user, keyFile, c.legacyCiphers)
+func (c *SSHConnection) Connect(user, keyFile string, timeout int) error {
+	config, err := config(user, keyFile, c.legacyCiphers, timeout)
 	if err != nil {
 		return err
 	}
@@ -127,7 +125,7 @@ func (c *SSHConnection) RunCommand(cmd string) (string, error) {
 	select {
 	case res := <-outputChan:
 		return res.output, res.err
-	case <-time.After(timeoutInSeconds * time.Second):
+	case <-time.After(cachedConfig.Timeout):
 		return "", errors.New("Timeout reached")
 	}
 

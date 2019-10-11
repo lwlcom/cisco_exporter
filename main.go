@@ -21,6 +21,7 @@ var (
 	sshHosts          = flag.String("ssh.targets", "", "SSH Hosts to scrape")
 	sshUsername       = flag.String("ssh.user", "cisco_exporter", "Username to use for SSH connection")
 	sshKeyFile        = flag.String("ssh.keyfile", "", "Key file to use for SSH connection")
+	sshTimeout        = flag.Int("ssh.timeout", 5, "Timeout to use for SSH connection")
 	debug             = flag.Bool("debug", false, "Show verbose debug output in log")
 	legacyCiphers     = flag.Bool("legacy.ciphers", false, "Allow legacy CBC ciphers")
 	bgpEnabled        = flag.Bool("bgp.enabled", true, "Scrape bgp metrics")
@@ -79,7 +80,7 @@ func handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
 	reg := prometheus.NewRegistry()
 
 	targets := strings.Split(*sshHosts, ",")
-	c := newCiscoCollector(targets)
+	c := newCiscoCollector(targets, *sshTimeout)
 	reg.MustRegister(c)
 
 	promhttp.HandlerFor(reg, promhttp.HandlerOpts{
