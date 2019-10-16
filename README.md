@@ -13,6 +13,7 @@ ssh.targets | Comma seperated list of hosts to scrape |
 ssh.user | Username to use for SSH connection | cisco_exporter
 ssh.keyfile | Key file to use for SSH connection | cisco_exporter
 ssh.timeout | Timeout in seconds to use for SSH connection | 5
+ssh.batch-size | The SSH response batch size | 10000
 debug | Show verbose debug output | false
 legacy.ciphers | Allow insecure legacy ciphers: aes128-cbc 3des-cbc aes192-cbc aes256-cbc | false
 
