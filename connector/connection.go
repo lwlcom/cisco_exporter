@@ -130,8 +130,6 @@ func (c *SSHConnection) RunCommand(cmd string) (string, error) {
 	case <-time.After(cachedConfig.Timeout):
 		return "", errors.New("Timeout reached")
 	}
-
-	return "", errors.New("Something went wrong")
 }
 
 // Close closes connection
