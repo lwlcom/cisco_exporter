@@ -12,15 +12,17 @@ import (
 const prefix string = "cisco_interface_"
 
 var (
-	receiveBytesDesc   *prometheus.Desc
-	receiveErrorsDesc  *prometheus.Desc
-	receiveDropsDesc   *prometheus.Desc
-	transmitBytesDesc  *prometheus.Desc
-	transmitErrorsDesc *prometheus.Desc
-	transmitDropsDesc  *prometheus.Desc
-	adminStatusDesc    *prometheus.Desc
-	operStatusDesc     *prometheus.Desc
-	errorStatusDesc    *prometheus.Desc
+	receiveBytesDesc       *prometheus.Desc
+	receiveErrorsDesc      *prometheus.Desc
+	receiveDropsDesc       *prometheus.Desc
+	receiveBroadcastDesc   *prometheus.Desc
+	receiveMulticastDesc   *prometheus.Desc
+	transmitBytesDesc      *prometheus.Desc
+	transmitErrorsDesc     *prometheus.Desc
+	transmitDropsDesc      *prometheus.Desc
+	adminStatusDesc        *prometheus.Desc
+	operStatusDesc         *prometheus.Desc
+	errorStatusDesc        *prometheus.Desc
 )
 
 func init() {
@@ -28,6 +30,8 @@ func init() {
 	receiveBytesDesc = prometheus.NewDesc(prefix+"receive_bytes", "Received data in bytes", l, nil)
 	receiveErrorsDesc = prometheus.NewDesc(prefix+"receive_errors", "Number of errors caused by incoming packets", l, nil)
 	receiveDropsDesc = prometheus.NewDesc(prefix+"receive_drops", "Number of dropped incoming packets", l, nil)
+	receiveBroadcastDesc = prometheus.NewDesc(prefix+"receive_broadcast", "Received broadcast packets", l, nil)
+	receiveMulticastDesc = prometheus.NewDesc(prefix+"receive_multicast", "Received multicast packets", l, nil)
 	transmitBytesDesc = prometheus.NewDesc(prefix+"transmit_bytes", "Transmitted data in bytes", l, nil)
 	transmitErrorsDesc = prometheus.NewDesc(prefix+"transmit_errors", "Number of errors caused by outgoing packets", l, nil)
 	transmitDropsDesc = prometheus.NewDesc(prefix+"transmit_drops", "Number of dropped outgoing packets", l, nil)
@@ -49,6 +53,8 @@ func (*interfaceCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- receiveBytesDesc
 	ch <- receiveErrorsDesc
 	ch <- receiveDropsDesc
+	ch <- receiveBroadcastDesc
+	ch <- receiveMulticastDesc
 	ch <- transmitBytesDesc
 	ch <- transmitDropsDesc
 	ch <- transmitErrorsDesc
@@ -114,6 +120,8 @@ func (c *interfaceCollector) Collect(client *rpc.Client, ch chan<- prometheus.Me
 		ch <- prometheus.MustNewConstMetric(transmitBytesDesc, prometheus.GaugeValue, item.OutputBytes, l...)
 		ch <- prometheus.MustNewConstMetric(transmitErrorsDesc, prometheus.GaugeValue, item.OutputErrors, l...)
 		ch <- prometheus.MustNewConstMetric(transmitDropsDesc, prometheus.GaugeValue, item.OutputDrops, l...)
+		ch <- prometheus.MustNewConstMetric(receiveBroadcastDesc, prometheus.GaugeValue, item.InputBroadcast, l...)
+		ch <- prometheus.MustNewConstMetric(receiveMulticastDesc, prometheus.GaugeValue, item.InputMulticast, l...)
 		ch <- prometheus.MustNewConstMetric(adminStatusDesc, prometheus.GaugeValue, float64(adminStatus), l...)
 		ch <- prometheus.MustNewConstMetric(operStatusDesc, prometheus.GaugeValue, float64(operStatus), l...)
 		ch <- prometheus.MustNewConstMetric(errorStatusDesc, prometheus.GaugeValue, float64(errorStatus), l...)

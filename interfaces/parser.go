@@ -22,6 +22,8 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 	adminStatusNXOSRegexp := regexp.MustCompile(`^\S+ is (up|down)(?:\s|,)?(\(Administratively down\))?.*$`)
 	descRegexp := regexp.MustCompile(`^\s+Description: (.*)$`)
 	dropsRegexp := regexp.MustCompile(`^\s+Input queue: \d+\/\d+\/(\d+)\/\d+ .+ Total output drops: (\d+)$`)
+	multicastRegexp := regexp.MustCompile(`(\d+)\s(IP\s)?multicast(s)?`)
+	broadcastRegexp := regexp.MustCompile(`(\d+)\sbroadcasts`)
 	inputBytesRegexp := regexp.MustCompile(`^\s+\d+ (?:packets input,|input packets)\s+(\d+) bytes.*$`)
 	outputBytesRegexp := regexp.MustCompile(`^\s+\d+ (?:packets output,|output packets)\s+(\d+) bytes.*$`)
 	inputErrorsRegexp := regexp.MustCompile(`^\s+(\d+) input error(?:s,)? .*$`)
@@ -78,6 +80,10 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 			current.OutputErrors = util.Str2float64(matches[1])
 		} else if matches := speedRegexp.FindStringSubmatch(line); matches != nil {
 			current.Speed = matches[2] + " " + matches[3]
+		} else if matches := multicastRegexp.FindStringSubmatch(line); matches != nil {
+			current.InputMulticast = util.Str2float64(matches[2])
+		} else if matches := broadcastRegexp.FindStringSubmatch(line); matches != nil {
+			current.InputBroadcast = util.Str2float64(matches[1])
 		}
 	}
 	return append(items, current), nil
