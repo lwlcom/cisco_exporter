@@ -44,6 +44,11 @@ func NewCollector() collector.RPCCollector {
 	return &interfaceCollector{}
 }
 
+// Name returns the name of the collector
+func (*interfaceCollector) Name() string {
+	return "Interfaces"
+}
+
 // Describe describes the metrics
 func (*interfaceCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- receiveBytesDesc

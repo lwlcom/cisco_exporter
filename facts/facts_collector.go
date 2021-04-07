@@ -44,6 +44,11 @@ func NewCollector() collector.RPCCollector {
 	return &factsCollector{}
 }
 
+// Name returns the name of the collector
+func (*factsCollector) Name() string {
+	return "Facts"
+}
+
 // Describe describes the metrics
 func (*factsCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionDesc
