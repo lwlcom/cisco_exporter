@@ -31,6 +31,11 @@ func NewCollector() collector.RPCCollector {
 	return &opticsCollector{}
 }
 
+// Name returns the name of the collector
+func (*opticsCollector) Name() string {
+	return "Optics"
+}
+
 // Describe describes the metrics
 func (*opticsCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- opticsTXDesc

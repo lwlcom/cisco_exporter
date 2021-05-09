@@ -1,0 +1,27 @@
+---
+debug: false
+legacy_ciphers: false
+# default values
+timeout: 5
+batch_size: 10000
+username: default-username
+password: default-password
+key_file: /path/to/key
+
+devices:
+  - host: host1.example.com
+    key_file: /path/to/key
+    timeout: 5
+    batch_size: 10000
+    features:
+      bgp: false
+  - host: host2.example.com:2233
+    username: exporter
+    password: secret
+
+features:
+  bgp: true
+  environment: true
+  facts: true
+  interfaces: true
+  optics: true

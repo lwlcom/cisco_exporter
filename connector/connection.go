@@ -2,63 +2,55 @@ package connector
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"strings"
 
-	"sync"
-
 	"time"
 
+	"github.com/lwlcom/cisco_exporter/config"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 )
 
-var (
-	cachedConfig *ssh.ClientConfig
-	lock         = &sync.Mutex{}
-)
+// NewSSSHConnection connects to device
+func NewSSSHConnection(device *Device, cfg *config.Config) (*SSHConnection, error) {
+	deviceConfig := device.DeviceConfig
 
-func config(user, keyFile string, legacyCiphers bool, timeout int) (*ssh.ClientConfig, error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	if cachedConfig != nil {
-		return cachedConfig, nil
+	legacyCiphers := cfg.LegacyCiphers
+	if deviceConfig.LegacyCiphers != nil {
+		legacyCiphers = *deviceConfig.LegacyCiphers
 	}
 
-	pk, err := loadPublicKeyFile(keyFile)
-	if err != nil {
-		return nil, err
+	batchSize := cfg.BatchSize
+	if deviceConfig.BatchSize != nil {
+		batchSize = *deviceConfig.BatchSize
 	}
 
-	cachedConfig = &ssh.ClientConfig{
-		User:            user,
-		Auth:            []ssh.AuthMethod{pk},
+	timeout := cfg.Timeout
+	if deviceConfig.Timeout != nil {
+		timeout = *deviceConfig.Timeout
+	}
+
+	sshConfig := &ssh.ClientConfig{
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         time.Duration(timeout) * time.Second,
 	}
 	if legacyCiphers {
-		cachedConfig.SetDefaults()
-		cachedConfig.Ciphers = append(cachedConfig.Ciphers, "aes128-cbc", "3des-cbc")
+		sshConfig.SetDefaults()
+		sshConfig.Ciphers = append(sshConfig.Ciphers, "aes128-cbc", "3des-cbc")
 	}
 
-	return cachedConfig, nil
-}
-
-// NewSSSHConnection connects to device
-func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout int, batchSize int) (*SSHConnection, error) {
-	if !strings.Contains(host, ":") {
-		host = host + ":22"
-	}
+	device.Auth(sshConfig)
 
 	c := &SSHConnection{
-		Host:          host,
-		legacyCiphers: legacyCiphers,
-		batchSize:     batchSize,
+		Host:         device.Host + ":" + device.Port,
+		batchSize:    batchSize,
+		clientConfig: sshConfig,
 	}
-	err := c.Connect(user, keyFile, timeout)
+
+	err := c.Connect()
 	if err != nil {
 		return nil, err
 	}
@@ -68,23 +60,19 @@ func NewSSSHConnection(host, user, keyFile string, legacyCiphers bool, timeout i
 
 // SSHConnection encapsulates the connection to the device
 type SSHConnection struct {
-	client        *ssh.Client
-	Host          string
-	stdin         io.WriteCloser
-	stdout        io.Reader
-	session       *ssh.Session
-	legacyCiphers bool
-	batchSize     int
+	client       *ssh.Client
+	Host         string
+	stdin        io.WriteCloser
+	stdout       io.Reader
+	session      *ssh.Session
+	batchSize    int
+	clientConfig *ssh.ClientConfig
 }
 
 // Connect connects to the device
-func (c *SSHConnection) Connect(user, keyFile string, timeout int) error {
-	config, err := config(user, keyFile, c.legacyCiphers, timeout)
-	if err != nil {
-		return err
-	}
-
-	c.client, err = ssh.Dial("tcp", c.Host, config)
+func (c *SSHConnection) Connect() error {
+	var err error
+	c.client, err = ssh.Dial("tcp", c.Host, c.clientConfig)
 	if err != nil {
 		return err
 	}
@@ -127,7 +115,7 @@ func (c *SSHConnection) RunCommand(cmd string) (string, error) {
 	select {
 	case res := <-outputChan:
 		return res.output, res.err
-	case <-time.After(cachedConfig.Timeout):
+	case <-time.After(c.clientConfig.Timeout):
 		return "", errors.New("Timeout reached")
 	}
 }
@@ -143,16 +131,17 @@ func (c *SSHConnection) Close() {
 	}
 }
 
-func loadPublicKeyFile(file string) (ssh.AuthMethod, error) {
-	b, err := ioutil.ReadFile(file)
+func loadPrivateKey(r io.Reader) (ssh.AuthMethod, error) {
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not read from reader")
 	}
 
 	key, err := ssh.ParsePrivateKey(b)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not parse private key")
 	}
+
 	return ssh.PublicKeys(key), nil
 }
 
