@@ -15,6 +15,7 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 		return nil, errors.New("'show interface' is not implemented for " + ostype)
 	}
 	items := []Interface{}
+	txNXOS := regexp.MustCompile(`^\s+TX$`) // NX OS
 	newIfRegexp := regexp.MustCompile(`(?:^!?(?: |admin|show|.+#).*$|^$)`)
 	macRegexp := regexp.MustCompile(`^\s+Hardware(?: is|:) .+, address(?: is|:) (.*) \(.*\)$`)
 	deviceNameRegexp := regexp.MustCompile(`^([a-zA-Z0-9\/\.-]+) is.*$`)
@@ -22,14 +23,16 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 	adminStatusNXOSRegexp := regexp.MustCompile(`^\S+ is (up|down)(?:\s|,)?(\(Administratively down\))?.*$`)
 	descRegexp := regexp.MustCompile(`^\s+Description: (.*)$`)
 	dropsRegexp := regexp.MustCompile(`^\s+Input queue: \d+\/\d+\/(\d+)\/\d+ .+ Total output drops: (\d+)$`)
-	multicastRegexp := regexp.MustCompile(`(\d+)\s(IP\s)?multicast(s)?`)
-	broadcastRegexp := regexp.MustCompile(`(\d+)\sbroadcasts`)
+	multiBroadNXOS := regexp.MustCompile(`^.* (\d+) multicast packets\s+(\d+) broadcast packets$`)               // NX OS
+	multiBroadIOSXE := regexp.MustCompile(`^\s+Received\s+(\d+)\sbroadcasts \((\d+) (?:IP\s)?multicast(?:s)?\)`) // IOS XE
+	multiBroadIOS := regexp.MustCompile(`^\s*Received (\d+) broadcasts.*$`)                                      // IOS
 	inputBytesRegexp := regexp.MustCompile(`^\s+\d+ (?:packets input,|input packets)\s+(\d+) bytes.*$`)
 	outputBytesRegexp := regexp.MustCompile(`^\s+\d+ (?:packets output,|output packets)\s+(\d+) bytes.*$`)
 	inputErrorsRegexp := regexp.MustCompile(`^\s+(\d+) input error(?:s,)? .*$`)
 	outputErrorsRegexp := regexp.MustCompile(`^\s+(\d+) output error(?:s,)? .*$`)
 	speedRegexp := regexp.MustCompile(`^\s+(.*)-duplex,\s(\d+) ((\wb)/s).*$`)
 
+	isRx := true
 	current := Interface{}
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
@@ -44,6 +47,7 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 			current = Interface{
 				Name: matches[1],
 			}
+			isRx = true
 		}
 		if current == (Interface{}) {
 			continue
@@ -80,9 +84,17 @@ func (c *interfaceCollector) Parse(ostype string, output string) ([]Interface, e
 			current.OutputErrors = util.Str2float64(matches[1])
 		} else if matches := speedRegexp.FindStringSubmatch(line); matches != nil {
 			current.Speed = matches[2] + " " + matches[3]
-		} else if matches := multicastRegexp.FindStringSubmatch(line); matches != nil {
+		} else if matches := txNXOS.FindStringSubmatch(line); matches != nil {
+			isRx = false
+		} else if matches := multiBroadNXOS.FindStringSubmatch(line); matches != nil {
+			if isRx {
+				current.InputMulticast = util.Str2float64(matches[1])
+				current.InputBroadcast = util.Str2float64(matches[2])
+			}
+		} else if matches := multiBroadIOSXE.FindStringSubmatch(line); matches != nil {
+			current.InputBroadcast = util.Str2float64(matches[1])
 			current.InputMulticast = util.Str2float64(matches[2])
-		} else if matches := broadcastRegexp.FindStringSubmatch(line); matches != nil {
+		} else if matches := multiBroadIOS.FindStringSubmatch(line); matches != nil {
 			current.InputBroadcast = util.Str2float64(matches[1])
 		}
 	}
