@@ -15,7 +15,7 @@ func (c *opticsCollector) ParseInterfaces(ostype string, output string) ([]strin
 		return nil, errors.New("'show interfaces stats' is not implemented for " + ostype)
 	}
 	var items []string
-	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+)\s*$`)
+	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+)\s*`)
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		matches := deviceNameRegexp.FindStringSubmatch(line)
