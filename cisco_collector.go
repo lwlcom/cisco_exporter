@@ -8,7 +8,7 @@ import (
 	"github.com/lwlcom/cisco_exporter/connector"
 	"github.com/lwlcom/cisco_exporter/rpc"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 )
 
 const prefix = "cisco_"
