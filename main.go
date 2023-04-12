@@ -144,9 +144,16 @@ func startServer() {
 }
 
 func handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
+
 	reg := prometheus.NewRegistry()
 
-	c := newCiscoCollector(devices)
+	devs, err := devicesForRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	c := newCiscoCollector(devs)
 	reg.MustRegister(c)
 
 	l := log.New()
@@ -155,4 +162,34 @@ func handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
 	promhttp.HandlerFor(reg, promhttp.HandlerOpts{
 		ErrorLog:      l,
 		ErrorHandling: promhttp.ContinueOnError}).ServeHTTP(w, r)
+}
+
+func devicesForRequest(r *http.Request) ([]*connector.Device, error) {
+	reqTarget := r.URL.Query().Get("target")
+	if reqTarget == "" {
+		return devices, nil
+	}
+
+	for _, d := range devices {
+		if d.Host == reqTarget {
+			return []*connector.Device{d}, nil
+		}
+	}
+
+	for _, dc := range cfg.Devices {
+		if !dc.IsHostPattern {
+			continue
+		}
+
+		if dc.HostPattern.MatchString(reqTarget) {
+			d, err := deviceFromDeviceConfig(dc, reqTarget, cfg)
+			if err != nil {
+				return nil, err
+			}
+
+			return []*connector.Device{d}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("the target '%s' is not defined in the configuration file", reqTarget)
 }
