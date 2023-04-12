@@ -3,6 +3,7 @@ package config
 import (
 	"io"
 	"io/ioutil"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -31,6 +32,8 @@ type DeviceConfig struct {
 	Timeout       *int           `yaml:"timeout,omitempty"`
 	BatchSize     *int           `yaml:"batch_size,omitempty"`
 	Features      *FeatureConfig `yaml:"features,omitempty"`
+	IsHostPattern bool           `yaml:"host_pattern,omitempty"`
+	HostPattern   *regexp.Regexp
 }
 
 // FeatureConfig is the list of collectors enabled or disabled
@@ -66,6 +69,13 @@ func Load(reader io.Reader) (*Config, error) {
 	}
 
 	for _, d := range c.Devices {
+		if d.IsHostPattern {
+			hostPattern, err := regexp.Compile(d.Host)
+			if err != nil {
+				return nil, err
+			}
+			d.HostPattern = hostPattern
+		}
 		if d.Features == nil {
 			continue
 		}
