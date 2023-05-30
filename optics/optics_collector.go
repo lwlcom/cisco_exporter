@@ -2,7 +2,6 @@ package optics
 
 import (
 	"log"
-	"regexp"
 
 	"github.com/lwlcom/cisco_exporter/rpc"
 
@@ -65,20 +64,12 @@ func (c *opticsCollector) Collect(client *rpc.Client, ch chan<- prometheus.Metri
 		return nil
 	}
 
-	xeDev, _ := regexp.Compile(`\S(\d+)/(\d+)/(\d+)`)
-
 	for _, i := range interfaces {
 		switch client.OSType {
-		case rpc.IOS:
+		case rpc.IOS, rpc.IOSXE:
 			out, err = client.RunCommand("show interfaces " + i + " transceiver")
 		case rpc.NXOS:
 			out, err = client.RunCommand("show interface " + i + " transceiver details")
-		case rpc.IOSXE:
-			matches := xeDev.FindStringSubmatch(i)
-			if matches == nil {
-				continue
-			}
-			out, err = client.RunCommand("show hw-module subslot " + matches[1] + "/" + matches[2] + " transceiver " + matches[3] + " status")
 		}
 		if err != nil {
 			if client.Debug {
