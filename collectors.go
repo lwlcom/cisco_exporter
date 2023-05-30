@@ -8,6 +8,7 @@ import (
 	"github.com/lwlcom/cisco_exporter/environment"
 	"github.com/lwlcom/cisco_exporter/facts"
 	"github.com/lwlcom/cisco_exporter/interfaces"
+	"github.com/lwlcom/cisco_exporter/neighbors"
 	"github.com/lwlcom/cisco_exporter/optics"
 )
 
@@ -39,6 +40,7 @@ func (c *collectors) initCollectorsForDevice(device *connector.Device) {
 	c.addCollectorIfEnabledForDevice(device, "environment", f.Environment, environment.NewCollector)
 	c.addCollectorIfEnabledForDevice(device, "facts", f.Facts, facts.NewCollector)
 	c.addCollectorIfEnabledForDevice(device, "interfaces", f.Interfaces, interfaces.NewCollector)
+	c.addCollectorIfEnabledForDevice(device, "neighbors", f.Neighbors, neighbors.NewCollector)
 	c.addCollectorIfEnabledForDevice(device, "optics", f.Optics, optics.NewCollector)
 
 }
