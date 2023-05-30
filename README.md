@@ -69,6 +69,14 @@ devices:
   - host: host2.example.com:2233
     username: exporter
     password: secret
+  - host: router.*.example.com
+    # Tell the exporter that this hostname should be used as a pattern when loading
+    # device-specific configurations. This example would match against a hostname
+    # like "router1.example.com".
+    host_pattern: true
+    username: exporter
+    password: secret
+
 
 features:
   bgp: true
