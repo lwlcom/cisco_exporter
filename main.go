@@ -32,6 +32,7 @@ var (
 	bgpEnabled         = flag.Bool("bgp.enabled", true, "Scrape bgp metrics")
 	environmentEnabled = flag.Bool("environment.enabled", true, "Scrape environment metrics")
 	factsEnabled       = flag.Bool("facts.enabled", true, "Scrape system metrics")
+	neighborsEnabled   = flag.Bool("neighbors.enabled", false, "Scrape neighbor counts (ARP & IPv6 ND table size)")
 	interfacesEnabled  = flag.Bool("interfaces.enabled", true, "Scrape interface metrics")
 	opticsEnabled      = flag.Bool("optics.enabled", true, "Scrape optic metrics")
 	configFile         = flag.String("config.file", "", "Path to config file")
@@ -112,6 +113,7 @@ func loadConfigFromFlags() *config.Config {
 	f.Environment = environmentEnabled
 	f.Facts = factsEnabled
 	f.Interfaces = interfacesEnabled
+	f.Neighbors = neighborsEnabled
 	f.Optics = opticsEnabled
 
 	return c
