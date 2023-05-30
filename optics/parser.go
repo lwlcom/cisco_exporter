@@ -35,7 +35,7 @@ func (c *opticsCollector) ParseTransceiver(ostype string, output string) (Optics
 	transceiverRegexp := make(map[string]*regexp.Regexp)
 	transceiverRegexp[rpc.IOS], _ = regexp.Compile(`\S+\s+(?:(?:-)?\d+\.\d+)\s+(?:(?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s*`)
 	transceiverRegexp[rpc.NXOS], _ = regexp.Compile(`\s*Tx Power\s*((?:-)?\d+\.\d+).*\s*Rx Power\s*((?:-)?\d+\.\d+).*`)
-	transceiverRegexp[rpc.IOSXE], _ = regexp.Compile(`\s+Transceiver Tx power\s+= ((?:-)?\d+\.\d+).*\s*Transceiver Rx optical power\s+= ((?:-)?\d+\.\d+).*`)
+	transceiverRegexp[rpc.IOSXE], _ = regexp.Compile(`\S+\s+(?:(?:-)?\d+\.\d+)\s+(?:(?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s*`)
 
 	matches := transceiverRegexp[ostype].FindStringSubmatch(output)
 	if matches == nil {
