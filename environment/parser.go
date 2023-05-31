@@ -17,8 +17,8 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 	items := []EnvironmentItem{}
 	tempRegexp := make(map[string]*regexp.Regexp)
 	powerRegexp := make(map[string]*regexp.Regexp)
-	tempRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*(\w\w)\s*Temp: (\w+)\s+\w+\s+(\d+) Celsius`)
-	powerRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*(\w\w)\s*PEM (\w+)\s+(\w+)\s+\d*\s[\s\w]*`)
+	tempRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*Temp: (\w+)\s+(\w+)\s+\w+\s+(\d+) Celsius`)
+	powerRegexp[rpc.IOSXE], _ = regexp.Compile(`(PS\d+)\s+([\w\-]+)\s+\w+\s+\d+\s\w+\s+(\w+)`)
 	tempRegexp[rpc.IOS], _ = regexp.Compile(`^(\d+)\s+(air \w+(?: +\w+)?)\s+(\d+)C \(.*\)\s+\w+$`)
 	powerRegexp[rpc.IOS], _ = regexp.Compile(`^(\w+)\s+.+\s+(AC) \w+\s+(\w+)\s+\w+\s+.+\s+.+$`)
 	tempRegexp[rpc.NXOS], _ = regexp.Compile(`^(\d+)\s+(.+)\s+\d\d?\s+\d\d?\s+(\d\d?)\s+\w+\s*$`)
