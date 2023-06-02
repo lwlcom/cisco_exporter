@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	l := []string{"target", "interface", "protocol", "state"}
+	l := []string{"target", "name", "protocol", "state"}
 	countDesc = prometheus.NewDesc(prefix+"count", "Neighbor count (ARP or IPv6 ND) on interface in state", l, nil)
 }
 
