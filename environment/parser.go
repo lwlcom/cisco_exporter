@@ -17,12 +17,14 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 	items := []EnvironmentItem{}
 	tempRegexp := make(map[string]*regexp.Regexp)
 	powerRegexp := make(map[string]*regexp.Regexp)
+	powerRegexpNew := make(map[string]*regexp.Regexp)
 	tempRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*(\w\w)\s*Temp: (\w+)\s+\w+\s+(\d+) Celsius`)
 	powerRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*(\w\w)\s*PEM (\w+)\s+(\w+)\s+\d*\s[\s\w]*`)
 	tempRegexp[rpc.IOS], _ = regexp.Compile(`^(\d+)\s+(air \w+(?: +\w+)?)\s+(\d+)C \(.*\)\s+\w+$`)
 	powerRegexp[rpc.IOS], _ = regexp.Compile(`^(\w+)\s+.+\s+(AC) \w+\s+(\w+)\s+\w+\s+.+\s+.+$`)
-	tempRegexp[rpc.NXOS], _ = regexp.Compile(`^(\d+)\s+(.+)\s+\d\d?\s+\d\d?\s+(\d\d?)\s+\w+\s*$`)
+	tempRegexp[rpc.NXOS], _ = regexp.Compile(`^(\d+)\s+(.+)\s+\d+\s+\d+\s+(\d+)\s+\w+\s*$`)
 	powerRegexp[rpc.NXOS], _ = regexp.Compile(`^(\d+)\s+.+\s+(AC)\s+.+\s+.+\s+(\w+)\s*$`)
+	powerRegexpNew[rpc.NXOS], _ = regexp.Compile(`^(\d+)\s+(\S+)\s+\d+\s+W\s+\d+\s+W\s+\d+\s+W\s+(\w+)\s*$`)
 
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
@@ -42,6 +44,18 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 				Status: matches[3],
 			}
 			items = append(items, x)
+		} else if ostype == rpc.NXOS {
+			// Additional power regex for NX-OS
+			if matches := powerRegexpNew[ostype].FindStringSubmatch(line); matches != nil {
+				ok := matches[3] == "Ok"
+				x := EnvironmentItem{
+					Name:   strings.TrimSpace(matches[1] + " " + matches[2]),
+					IsTemp: false,
+					OK:     ok,
+					Status: matches[3],
+				}
+				items = append(items, x)
+			}
 		}
 	}
 	return items, nil

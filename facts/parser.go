@@ -57,7 +57,7 @@ func (c *factsCollector) ParseMemory(ostype string, output string) ([]MemoryFact
 
 // ParseCPU parses cli output and tries to find current CPU utilization
 func (c *factsCollector) ParseCPU(ostype string, output string) (CPUFact, error) {
-	if ostype != rpc.IOSXE && ostype != rpc.IOS {
+	if ostype != rpc.IOSXE && ostype != rpc.NXOS && ostype != rpc.IOS {
 		return CPUFact{}, errors.New("'show process cpu' is not implemented for " + ostype)
 	}
 	memoryRegexp, _ := regexp.Compile(`^\s*CPU utilization for five seconds: (\d+)%\/(\d+)%; one minute: (\d+)%; five minutes: (\d+)%.*$`)
