@@ -82,3 +82,44 @@ func (c *opticsCollector) ParseTransceiver(ostype string, output string) (Optics
 	}
 	return optics, nil
 }
+
+func (c *opticsCollector) ParseTransceiverAll(ostype string, output string) (map[string]*Optics, error) {
+	if ostype != rpc.IOS && ostype != rpc.IOSXE {
+		return map[string]*Optics{}, errors.New("All interface transceiver data is not implemented for " + ostype)
+	}
+
+	var data = map[string]*Optics{}
+	re_section := regexp.MustCompile(`^\s+(Temperature|Voltage|Current|Transmit Power|Receive Power)`)
+	re_line := regexp.MustCompile(`^(?P<short_name>\w+\d+\S+)(?:\s+(?P<lane>(?:\d|N\/A)))?\s+(?P<value>(?:-?\d+\.\d+|N\/A))\s+(?P<high_alarm>(?:-?\d+\.\d+|N\/A))\s+(?P<high_warn>(?:-?\d+\.\d+|N\/A))\s+(?P<low_warn>(?:-?\d+\.\d+|N\/A))\s+(?P<low_alarm>(?:-?\d+\.\d+|N\/A))`)
+	var cur_section string
+	for _, line := range strings.Split(output, "\n") {
+		match := re_section.FindStringSubmatch(line)
+		if match != nil {
+			cur_section = match[1]
+			continue
+		}
+		match = re_line.FindStringSubmatch(line)
+		if match != nil {
+			iface_name, err := util.InterfaceShortToLong(match[1])
+			if err != nil {
+				return map[string]*Optics{}, err
+			}
+			optics, ok := data[iface_name]
+			if !ok {
+				optics = &Optics{}
+				data[iface_name] = optics
+			}
+			for group_idx, group_name := range re_line.SubexpNames() {
+				if group_idx != 0 && group_name != "" {
+					if group_name == "value" && cur_section == "Transmit Power" {
+						optics.TxPower = util.Str2float64Nan(match[group_idx])
+					}
+					if group_name == "value" && cur_section == "Receive Power" {
+						optics.RxPower = util.Str2float64Nan(match[group_idx])
+					}
+				}
+			}
+		}
+	}
+	return data, nil
+}
