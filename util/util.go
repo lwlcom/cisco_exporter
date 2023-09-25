@@ -69,3 +69,15 @@ func InterfaceShortToLong(shortName string) (string, error) {
 	}
 	return "", errors.New("No long form found for name")
 }
+
+// https://stackoverflow.com/a/46202939
+// return regexp named capture groups as map
+func FindNamedMatches(r *regexp.Regexp, str string) map[string]string {
+	match := r.FindStringSubmatch(str)
+	subMatchMap := make(map[string]string)
+	for i, value := range match {
+		subMatchMap[r.SubexpNames()[i]] = value
+	}
+
+	return subMatchMap
+}
