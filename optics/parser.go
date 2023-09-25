@@ -15,12 +15,20 @@ func (c *opticsCollector) ParseInterfaces(ostype string, output string) ([]strin
 		return nil, errors.New("'show interfaces stats' is not implemented for " + ostype)
 	}
 	var items []string
-	deviceNameRegexp, _ := regexp.Compile(`^([a-zA-Z0-9\/\.-]+)\s*`)
+	virtualNames := [4]string{"Vlan", "Loopback", "Tunnel", "Port-channel"}
+	deviceNameRegexp, _ := regexp.Compile(`^(?:Interface\s)?([a-zA-Z0-9\/\.-]+)(?: is disabled)?\s*$`)
 	lines := strings.Split(output, "\n")
+LINES:
 	for _, line := range lines {
 		matches := deviceNameRegexp.FindStringSubmatch(line)
 		if matches == nil {
 			continue
+		}
+		// ignore virtual interfaces
+		for _, virtualName := range virtualNames {
+			if strings.HasPrefix(matches[1], virtualName) {
+				continue LINES
+			}
 		}
 		items = append(items, matches[1])
 	}

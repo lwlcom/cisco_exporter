@@ -47,7 +47,7 @@ func (c *opticsCollector) Collect(client *rpc.Client, ch chan<- prometheus.Metri
 
 	switch client.OSType {
 	case rpc.IOS, rpc.IOSXE:
-		iflistcmd = "show interfaces stats | exclude disabled"
+		iflistcmd = "show interfaces stats"
 	case rpc.NXOS:
 		iflistcmd = "show interface status | exclude disabled | exclude notconn | exclude sfpAbsent | exclude --------------------------------------------------------------------------------"
 	}
