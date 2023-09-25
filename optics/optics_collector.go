@@ -80,7 +80,7 @@ func (c *opticsCollector) Collect(client *rpc.Client, ch chan<- prometheus.Metri
 		optic, err := c.ParseTransceiver(client.OSType, out)
 		if err != nil {
 			if client.Debug {
-				log.Printf("Transceiver data for %s: %s\n", labelValues[0], err.Error())
+				log.Printf("Transceiver data for %s %s: %s\n", labelValues[0], i, err.Error())
 			}
 			continue
 		}
