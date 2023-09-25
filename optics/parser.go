@@ -35,22 +35,50 @@ LINES:
 	return items, nil
 }
 
-// ParseTransceiver parses cli output and tries to find tx/rx power for an interface
+/* ParseTransceiver parses cli output and tries to find tx/rx power for an interface
+ * examples for IOS & IOSXE:
+ *
+ *                                              Optical   Optical
+ *              Temperature  Voltage  Current   Tx Power  Rx Power
+ * Port         (Celsius)    (Volts)  (mA)      (dBm)     (dBm)
+ * ---------    -----------  -------  --------  --------  --------
+ * Te1/1               23.9     3.28      17.6      -5.9      -7.2
+ * current             23.9     3.28      17.6      -5.9      -7.2
+ * domna               30.9     3.32       0.0       N/A       N/A
+ *
+ *                                  Optical   Optical
+ *            Temperature  Voltage  Tx Power  Rx Power
+ * Port       (Celsius)    (Volts)  (dBm)     (dBm)
+ * ---------  -----------  -------  --------  --------
+ * nocurr            23.9     3.28       1.2     -40.0
+ * txna              23.9     3.28       N/A     -40.0
+ * tempminus        -23.9     3.28       1.2     -40.0
+ * tempna             N/A     3.28       1.2     -40.0
+ * voltna            23.9      N/A       1.2     -40.0
+ */
 func (c *opticsCollector) ParseTransceiver(ostype string, output string) (Optics, error) {
 	if ostype != rpc.IOSXE && ostype != rpc.NXOS && ostype != rpc.IOS {
 		return Optics{}, errors.New("Transceiver data is not implemented for " + ostype)
 	}
 	transceiverRegexp := make(map[string]*regexp.Regexp)
-	transceiverRegexp[rpc.IOS], _ = regexp.Compile(`\S+\s+(?:(?:-)?\d+\.\d+)\s+(?:(?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s*`)
-	transceiverRegexp[rpc.NXOS], _ = regexp.Compile(`\s*Tx Power\s*((?:-)?\d+\.\d+).*\s*Rx Power\s*((?:-)?\d+\.\d+).*`)
-	transceiverRegexp[rpc.IOSXE], _ = regexp.Compile(`\S+\s+(?:(?:-)?\d+\.\d+)\s+(?:(?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s+((?:-)?\d+\.\d+)\s*`)
+	transceiverRegexp[rpc.IOS] = regexp.MustCompile(`\S+\s+(?P<temp>(?:-?\d+\.\d+|N\/A))\s+(?P<volt>(?:-?\d+\.\d+|N\/A))(?:\s+(?P<curr>(?:-?\d+\.\d+|N\/A)))?\s+(?P<tx>(?:-?\d+\.\d+|N\/A))\s+(?P<rx>(?:-?\d+\.\d+|N\/A))\s*`)
+	transceiverRegexp[rpc.NXOS] = regexp.MustCompile(`\s*Tx Power\s*(?P<tx>(?:-)?\d+\.\d+).*\s*Rx Power\s*(?P<rx>(?:-)?\d+\.\d+).*`)
+	transceiverRegexp[rpc.IOSXE] = transceiverRegexp[rpc.IOS]
 
 	matches := transceiverRegexp[ostype].FindStringSubmatch(output)
 	if matches == nil {
 		return Optics{}, errors.New("Transceiver not found")
 	}
-	return Optics{
-		TxPower: util.Str2float64(matches[1]),
-		RxPower: util.Str2float64(matches[2]),
-	}, nil
+	var optics Optics
+	for i, name := range transceiverRegexp[ostype].SubexpNames() {
+		if i != 0 && name != "" {
+			if name == "rx" {
+				optics.RxPower = util.Str2float64(matches[i])
+			}
+			if name == "tx" {
+				optics.TxPower = util.Str2float64(matches[i])
+			}
+		}
+	}
+	return optics, nil
 }
