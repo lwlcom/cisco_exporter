@@ -60,22 +60,25 @@ func (c *neighborsCollector) CollectIPv4(client *rpc.Client, ch chan<- prometheu
 		return nil
 	}
 
+	var interfaces_data = make(map[string]*InterfaceNeighors)
 	for _, i := range interfaces {
-		out, err = client.RunCommand("show ip arp " + i)
-		if err != nil {
-			if client.Debug {
-				log.Printf("IPv4 neighbors command on %s: %s\n", labelValues[0], err.Error())
-			}
-			continue
-		}
-		interface_neigbors, err := c.ParseIPv4Neighbors(client.OSType, out)
-		if err != nil {
-			if client.Debug {
-				log.Printf("IPv4 neighbors data for %s: %s\n", labelValues[0], err.Error())
-			}
-			continue
-		}
+		interfaces_data[i] = &InterfaceNeighors{}
+	}
 
+	out, err = client.RunCommand("show arp detail | include via")
+	if err != nil {
+		return err
+	}
+
+	err = c.ParseIPv4Neighbors(client.OSType, out, interfaces_data)
+	if err != nil {
+		if client.Debug {
+			log.Printf("ParseIPv4Neighbors for %s: %s\n", labelValues[0], err)
+		}
+		return err
+	}
+
+	for i, interface_neigbors := range interfaces_data {
 		var l []string
 		l = append(labelValues, i, "4", "incomplete")
 		ch <- prometheus.MustNewConstMetric(countDesc, prometheus.GaugeValue, float64(interface_neigbors.Incomplete), l...)
@@ -106,22 +109,25 @@ func (c *neighborsCollector) CollectIPv6(client *rpc.Client, ch chan<- prometheu
 		return nil
 	}
 
+	var interfaces_data = make(map[string]*InterfaceNeighors)
 	for _, i := range interfaces {
-		out, err = client.RunCommand("show ipv6 neighbors " + i)
-		if err != nil {
-			if client.Debug {
-				log.Printf("IPv6 neighbors command on %s: %s\n", labelValues[0], err.Error())
-			}
-			continue
-		}
-		interface_neigbors, err := c.ParseIPv6Neighbors(client.OSType, out)
-		if err != nil {
-			if client.Debug {
-				log.Printf("IPv6 neighbors data for %s: %s\n", labelValues[0], err.Error())
-			}
-			continue
-		}
+		interfaces_data[i] = &InterfaceNeighors{}
+	}
 
+	out, err = client.RunCommand("show ipv6 neighbors")
+	if err != nil {
+		return err
+	}
+
+	err = c.ParseIPv6Neighbors(client.OSType, out, interfaces_data)
+	if err != nil {
+		if client.Debug {
+			log.Printf("ParseIPv6Neighbors for %s: %s\n", labelValues[0], err)
+		}
+		return err
+	}
+
+	for i, interface_neigbors := range interfaces_data {
 		var l []string
 		l = append(labelValues, i, "6", "incomplete")
 		ch <- prometheus.MustNewConstMetric(countDesc, prometheus.GaugeValue, float64(interface_neigbors.Incomplete), l...)
