@@ -1,8 +1,12 @@
 package neighbors
 
 import (
+	"errors"
+	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/lwlcom/cisco_exporter/util"
 )
 
 // ParseInterfacesIPv4 parses cli output and returns list of interface names
@@ -46,19 +50,11 @@ func (c *neighborsCollector) ParseInterfacesIPv6(ostype string, output string) (
 }
 
 // ParseIPv4Neighbors parses cli output and counts neighbor entries per state for an interface
-func (c *neighborsCollector) ParseIPv4Neighbors(ostype string, output string) (InterfaceNeighors, error) {
-	interface_neigbors := InterfaceNeighors{
-		Incomplete: 0,
-		Reachable:  0,
-		Stale:      0,
-		Delay:      0,
-		Probe:      0,
-	}
-	// Protocol  Address          Age (min)  Hardware Addr   Type   Interface
-	// Internet  10.172.80.56            -   aaaa.7fc9.aaff  ARPA   TwentyFiveGigE1/0/46
-	// Internet  10.172.80.57           10   aaaa.c14e.fbd6  ARPA   TwentyFiveGigE1/0/46
-	// Internet  10.172.36.126           0   Incomplete      ARPA
-	ipv4NeighborRegexp, _ := regexp.Compile(`^\w+\s+\d+\.\d+\.\d+\.\d+\s+([\d\-]+)\s+([a-zA-Z0-9\.]+)\s+`)
+func (c *neighborsCollector) ParseIPv4Neighbors(ostype string, output string, data map[string]*InterfaceNeighors) error {
+	// example:
+	// Dynamic, via Vlan8, last updated 9 minutes ago.
+	// Incomplete, via Vlan8, last updated 0 minute ago.
+	ipv4NeighborRegexp, _ := regexp.Compile(`^\s*(Dynamic|Incomplete|Interface),? via ([a-zA-Z0-9\/\-\.]+)`)
 	lines := strings.Split(output, "\n")
 
 	for _, line := range lines {
@@ -66,33 +62,38 @@ func (c *neighborsCollector) ParseIPv4Neighbors(ostype string, output string) (I
 		if matches == nil {
 			continue
 		}
-		if matches[2] == "Incomplete" {
+		interface_neigbors, ok := data[matches[2]]
+		if !ok {
+			return errors.New(fmt.Sprintf("Interface %s found in ARP but not 'sh ip int brie' command", matches[2]))
+		}
+		if matches[1] == "Incomplete" {
 			interface_neigbors.Incomplete++
-		} else if matches[1] != "-" {
+		} else if matches[1] == "Dynamic" {
 			interface_neigbors.Reachable++
 		}
 	}
-	return interface_neigbors, nil
+	return nil
 }
 
 // ParseIPv6Neighbors parses cli output and counts neighbor entries per state for an interface
-func (c *neighborsCollector) ParseIPv6Neighbors(ostype string, output string) (InterfaceNeighors, error) {
-	interface_neigbors := InterfaceNeighors{
-		Incomplete: 0,
-		Reachable:  0,
-		Stale:      0,
-		Delay:      0,
-		Probe:      0,
-	}
+func (c *neighborsCollector) ParseIPv6Neighbors(ostype string, output string, data map[string]*InterfaceNeighors) error {
 	// IPv6 Address                              Age Link-layer Addr State Interface
 	// FE80::AD79:7159:3AB9:D52F                   0 aaaa.6cd6.0e6f  STALE Vl65
-	ipv6NeighborRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\:]+\s+[\d\-]+\s+[a-zA-Z0-9\.]+\s+(\w+)\s+`)
+	ipv6NeighborRegexp, _ := regexp.Compile(`^[a-zA-Z0-9\:]+\s+[\d\-]+\s+[a-zA-Z0-9\.]+\s+(\w+)\s+(\S+)`)
 	lines := strings.Split(output, "\n")
 
 	for _, line := range lines {
 		matches := ipv6NeighborRegexp.FindStringSubmatch(line)
 		if matches == nil {
 			continue
+		}
+		iface_name, err := util.InterfaceShortToLong(matches[2])
+		if err != nil {
+			return err
+		}
+		interface_neigbors, ok := data[iface_name]
+		if !ok {
+			return errors.New(fmt.Sprintf("Interface %s found in ipv6 neighbors but not 'show ipv6 interface brief' command", matches[2]))
 		}
 		if matches[1] == "INCOM" {
 			interface_neigbors.Incomplete++
@@ -106,5 +107,5 @@ func (c *neighborsCollector) ParseIPv6Neighbors(ostype string, output string) (I
 			interface_neigbors.Probe++
 		}
 	}
-	return interface_neigbors, nil
+	return nil
 }
