@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	l := []string{"target", "interface"}
+	l := []string{"target", "name"}
 	opticsTempDesc = prometheus.NewDesc(prefix+"temp", "Transceiver temperature in degrees Celsius", l, nil)
 	opticsTempHATDesc = prometheus.NewDesc(prefix+"temp_high_alarm_threshold", "Transceiver temperature high alarm threshold", l, nil)
 	opticsTempHWTDesc = prometheus.NewDesc(prefix+"temp_high_warn_threshold", "Transceiver temperature high warning threshold", l, nil)
