@@ -135,7 +135,7 @@ func startServer() {
 			<h1>Cisco Exporter</h1>
 			<p><a href="` + *metricsPath + `">Metrics</a></p>
 			<h2>More information:</h2>
-			<p><a href="https://github.com/lwlcom/cisco_exporter">github.com/lwlcom/cisco_exporter</a></p>
+			<p><a href="https://github.com/matejv/cisco_exporter">github.com/matejv/cisco_exporter</a></p>
 			</body>
 			</html>`))
 	})

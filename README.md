@@ -1,7 +1,7 @@
 # cisco_exporter
 Exporter for metrics from devices running Cisco (NX-OS/IOS XE/IOS) (via SSH) https://prometheus.io/
 
-The basic structure is based on https://github.com/czerwonk/junos_exporter
+This is a fork of https://github.com/lwlcom/cisco_exporter that seems to no longer be maintained.
 
 # flags
 Name     | Description | Default
@@ -27,11 +27,12 @@ bgp | BGP (message count, prefix counts per peer, session state) | IOS XE/NX-OS
 environment | Environment (temperatures, state of power supply) | NX-OS/IOS XE/IOS
 facts | System informations (OS Version, memory: total/used/free, cpu: 5s/1m/5m/interrupts) | IOS XE/IOS
 interfaces | Interfaces (transmitted/received: bytes/errors/drops, admin/oper state) | NX-OS (*_drops is always 0)/IOS XE/IOS
-optics | Optical signals (tx/rx) | NX-OS/IOS XE/IOS
+optics | Optical signals (tx/rx) & temp | NX-OS/IOS XE/IOS
+neighbors | Count of ARP & IPv6 ND entries | IOS XE/IOS
 
 ## Install
 ```bash
-go get -u github.com/lwlcom/cisco_exporter
+go get -u github.com/matejv/cisco_exporter
 ```
 
 ## Usage
@@ -83,6 +84,7 @@ features:
   environment: true
   facts: true
   interfaces: true
+  neighbors: true
   optics: true
 
 ```
@@ -92,7 +94,7 @@ This software uses components of the following projects
 * Prometheus Go client library (https://github.com/prometheus/client_golang)
 
 ## License
-(c) Martin Poppen, 2018. Licensed under [MIT](LICENSE) license.
+(c) Martin Poppen, 2018; Matej Vadnjal, 2023. Licensed under [MIT](LICENSE) license.
 
 ## Prometheus
 see https://prometheus.io/
