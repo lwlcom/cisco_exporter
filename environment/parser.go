@@ -45,7 +45,7 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 	items := []EnvironmentItem{}
 	tempRegexp := make(map[string]*regexp.Regexp)
 	powerRegexp := make(map[string]*regexp.Regexp)
-	tempRegexp[rpc.IOSXE], _ = regexp.Compile(`\s*Temp: (?P<sensor>\w+)\s+(?P<location>\w+)\s+(?P<state>\w+)\s+(?P<value>\d+) Celsius`)
+	tempRegexp[rpc.IOSXE], _ = regexp.Compile(`^\s*(?:Temp: )?(?P<sensor>(?:\w+\s?)+)\s+(?P<location>\w+)\s+(?P<state>(?:\w+\s?)+)\s+(?P<value>\d+) Celsius`)
 	powerRegexp[rpc.IOSXE], _ = regexp.Compile(`(PS\d+)\s+([\w\-]+)\s+\w+\s+\d+\s\w+\s+(\w+)`)
 	tempRegexp[rpc.IOS], _ = regexp.Compile(`^(?P<location>\d+)\s+(?P<sensor>air \w+(?: +\w+)?)\s+(?P<value>\d+)C \(.*\)\s+\w+$`)
 	powerRegexp[rpc.IOS], _ = regexp.Compile(`^(\w+)\s+.+\s+(AC) \w+\s+(\w+)\s+\w+\s+.+\s+.+$`)
@@ -56,12 +56,13 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 	for _, line := range lines {
 		if matches := util.FindNamedMatches(tempRegexp[ostype], line); len(matches) > 0 {
 			x := EnvironmentItem{
-				Name:        strings.TrimSpace(matches["location"] + " " + matches["sensor"]),
+				Name:        strings.TrimSpace(matches["location"]) + " " + strings.TrimSpace(matches["sensor"]),
 				IsTemp:      true,
 				Temperature: util.Str2float64(matches["value"]),
 			}
 			if state, ok := matches["state"]; ok {
-				x.OK = state == "Normal" || state == "good" || state == "ok" || state == "GREEN"
+				state = strings.ToLower(strings.TrimSpace(state))
+				x.OK = state == "normal" || state == "good" || state == "ok" || state == "green"
 				x.Status = state
 			}
 			items = append(items, x)
