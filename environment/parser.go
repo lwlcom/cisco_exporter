@@ -23,6 +23,10 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 	if err != nil {
 		return items, errors.New("Error parsing via templ_power: " + err.Error())
 	}
+	results_fan, err := util.ParseTextfsm(templ_fan, output)
+	if err != nil {
+		return items, errors.New("Error parsing via templ_fan: " + err.Error())
+	}
 	for _, result := range results_temp {
 		location := result["LOCATION"].(string)
 		sensor := result["SENSOR"].(string)
@@ -49,6 +53,37 @@ func (c *environmentCollector) Parse(ostype string, output string) ([]Environmen
 			Status: status,
 		}
 		items = append(items, x)
+	}
+	for _, result := range results_fan {
+		location := result["LOCATION"].(string)
+		name := result["NAME"].(string)
+		status := strings.ToLower(strings.TrimSpace(result["STATUS"].(string)))
+		status1 := strings.ToLower(strings.TrimSpace(result["STATUS1"].(string)))
+		if len(status1) > 0 {
+			// parsing power supply fans results in single record with status of two fans
+			name = "0"
+		}
+		status_ok := status == "normal" || status == "good" || status == "ok" || status == "green"
+		x := EnvironmentItem{
+			Name:   strings.TrimSpace(location + " " + name),
+			IsFan:  true,
+			OK:     status_ok,
+			Status: status,
+		}
+		items = append(items, x)
+		if len(status1) > 0 {
+			// add info from the second power supply fan
+			name = "1"
+			status = status1
+			status_ok := status == "normal" || status == "good" || status == "ok" || status == "green"
+			x := EnvironmentItem{
+				Name:   strings.TrimSpace(location + " " + name),
+				IsFan:  true,
+				OK:     status_ok,
+				Status: status,
+			}
+			items = append(items, x)
+		}
 	}
 	return items, nil
 }
