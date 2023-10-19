@@ -5,6 +5,8 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+
+	"github.com/sirikothe/gotextfsm"
 )
 
 // Str2float64 converts a string to float64
@@ -80,4 +82,18 @@ func FindNamedMatches(r *regexp.Regexp, str string) map[string]string {
 	}
 
 	return subMatchMap
+}
+
+func ParseTextfsm(template string, output string) ([]map[string]interface{}, error) {
+	fsm := gotextfsm.TextFSM{}
+	err := fsm.ParseString(template)
+	if err != nil {
+		return nil, errors.New("textfsm error while parsing template: " + err.Error())
+	}
+	parser := gotextfsm.ParserOutput{}
+	err = parser.ParseTextString(output, fsm, true)
+	if err != nil {
+		return nil, errors.New("textfsm error while parsing output: " + err.Error())
+	}
+	return parser.Dict, nil
 }
