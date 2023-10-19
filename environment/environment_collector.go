@@ -21,7 +21,7 @@ func init() {
 	l := []string{"target", "item"}
 	temperaturesDesc = prometheus.NewDesc(prefix+"sensor_temp", "Sensor temperatures", l, nil)
 	l = append(l, "status")
-	temperaturesStatusDesc = prometheus.NewDesc(prefix+"sensor_status", "Status of sensor temperatures (1 OK, 0 Something is wrong)", l, nil)
+	temperaturesStatusDesc = prometheus.NewDesc(prefix+"sensor_temp_status", "Status of sensor temperatures (1 OK, 0 Something is wrong)", l, nil)
 	powerSupplyDesc = prometheus.NewDesc(prefix+"power_up", "Status of power supplies (1 OK, 0 Something is wrong)", l, nil)
 }
 
