@@ -15,14 +15,16 @@ var (
 	temperaturesDesc       *prometheus.Desc
 	temperaturesStatusDesc *prometheus.Desc
 	powerSupplyDesc        *prometheus.Desc
+	fanStatusDesc          *prometheus.Desc
 )
 
 func init() {
 	l := []string{"target", "item"}
 	temperaturesDesc = prometheus.NewDesc(prefix+"sensor_temp", "Sensor temperatures", l, nil)
 	l = append(l, "status")
-	temperaturesStatusDesc = prometheus.NewDesc(prefix+"sensor_status", "Status of sensor temperatures (1 OK, 0 Something is wrong)", l, nil)
+	temperaturesStatusDesc = prometheus.NewDesc(prefix+"sensor_temp_status", "Status of sensor temperatures (1 OK, 0 Something is wrong)", l, nil)
 	powerSupplyDesc = prometheus.NewDesc(prefix+"power_up", "Status of power supplies (1 OK, 0 Something is wrong)", l, nil)
+	fanStatusDesc = prometheus.NewDesc(prefix+"fan_status", "Status of fan (1 OK, 0 Something is wrong)", l, nil)
 }
 
 type environmentCollector struct {
@@ -43,6 +45,7 @@ func (*environmentCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- temperaturesDesc
 	ch <- temperaturesStatusDesc
 	ch <- powerSupplyDesc
+	ch <- fanStatusDesc
 }
 
 // Collect collects metrics from Cisco
@@ -77,6 +80,13 @@ func (c *environmentCollector) Collect(client *rpc.Client, ch chan<- prometheus.
 			}
 			l = append(l, item.Status)
 			ch <- prometheus.MustNewConstMetric(temperaturesStatusDesc, prometheus.GaugeValue, float64(val), l...)
+		} else if item.IsFan {
+			val := 0
+			if item.OK {
+				val = 1
+			}
+			l = append(l, item.Status)
+			ch <- prometheus.MustNewConstMetric(fanStatusDesc, prometheus.GaugeValue, float64(val), l...)
 		} else {
 			val := 0
 			if item.OK {
